@@ -82,3 +82,17 @@ class DeviceRepository:
             """
             result = session.run(query, {'id1': id1, 'id2': id2})
             return result.single()['connected_devices']
+
+
+    def find_most_recent_interaction(self, device_id):
+        with self.driver.session() as session:
+            query = """
+            MATCH (d1:Device {id: $device_id})-[r:CONNECTED]-(d2:Device)
+            WITH r
+            ORDER BY r.timestamp DESC
+            LIMIT 1
+            MATCH (d1:Device)-[r]-(o:Device)
+            RETURN r.timestamp as most_recent_interaction
+            """
+            result = session.run(query, {'device_id': device_id})
+            return result.single()['most_recent_interaction']
