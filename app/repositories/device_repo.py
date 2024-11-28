@@ -58,9 +58,8 @@ class DeviceRepository:
         with self.driver.session() as session:
             query = """
             MATCH (node1)-[r:CONNECTED]->(node2)
-            WHERE r.signal_strength_dbm >= -60
+            WHERE r.signal_strength_dbm >= $signal
             RETURN node1.id, node2.id
             """
-            result = session.run(query)
-            print(result.data())
-            return result.data()
+            result = session.run(query, {'signal': signal})
+            return [r for r in result.data()]
