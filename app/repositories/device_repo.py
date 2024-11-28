@@ -43,12 +43,24 @@ class DeviceRepository:
             MATCH (start:Device)
             MATCH (end:Device)
             WHERE start <> end
-            MATCH path = shortestPath((start)-[:INTERACTED_WITH*]->(end))
-            WHERE ALL(r IN relationships(path) WHERE r.method = $method)
+            MATCH path = shortestPath((start)-[:CONNECTED*]->(end))
+            WHERE ALL(r IN relationships(path) WHERE r.method = 'Bluetooth')
             WITH path, length(path) as pathLength
             ORDER BY pathLength DESC
             LIMIT 1
-            RETURN length(path)
+            RETURN length(path) as length
             """
-            result = session.run(query, {'method': method})
-            return result.single()['length']
+            result = session.run(query)
+            print(result.data())
+            return result.single()
+
+    def find_all_by_signal(self, signal):
+        with self.driver.session() as session:
+            query = """
+            MATCH (node1)-[r:CONNECTED]->(node2)
+            WHERE r.signal_strength_dbm >= -60
+            RETURN node1.id, node2.id
+            """
+            result = session.run(query)
+            print(result.data())
+            return result.data()
