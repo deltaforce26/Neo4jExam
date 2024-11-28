@@ -51,8 +51,7 @@ class DeviceRepository:
             RETURN length(path) as length
             """
             result = session.run(query)
-            print(result.data())
-            return result.single()
+            return result.data()[0]['length']
 
     def find_all_by_signal(self, signal):
         with self.driver.session() as session:
@@ -63,3 +62,23 @@ class DeviceRepository:
             """
             result = session.run(query, {'signal': signal})
             return [r for r in result.data()]
+
+
+    def find_nearest_device_count(self, id):
+        with self.driver.session() as session:
+            query = """
+            MATCH (d:Device{id: $id})
+            RETURN d.id as device_id,    
+                    SIZE([(d)-[:CONNECTED]-(reply:Device) | reply]) AS device_count
+            """
+            result = session.run(query, {'id': id})
+            return result.single()['device_count']
+
+
+    def find_connected_devices(self, id1, id2):
+        with self.driver.session() as session:
+            query = """
+            RETURN EXISTS( (:Device {id: $id1})-[:CONNECTED]-(:Device {id: $id2}) ) as connected_devices
+            """
+            result = session.run(query, {'id1': id1, 'id2': id2})
+            return result.single()['connected_devices']
